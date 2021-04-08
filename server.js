@@ -10,6 +10,13 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override')
+// require our mailgun dependencies
+// SEND EMAIL
+const user = {
+  email: 'YOUR@EMAIL.com',
+  name: 'Emily',
+  age: '43'
+};
 
 const app = express();
 
@@ -32,6 +39,16 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+// auth with our mailgun API key and domain
+const auth = {
+  auth: {
+    api_key: process.env.b16b82a63512e8a1c05661881c9648bb_e687bab4_d8fcaaf5,
+    domain: process.env.davidpetespets	
+
+  }
+}
+
+// create a mailer
 
 require('./routes/index.js')(app);
 require('./routes/pets.js')(app);
