@@ -14,11 +14,10 @@ block content
             small.text-muted= pet.species
             p.card-text= pet.description
             .text-right
-                a.card-link(href=`/pets/${pet._id}`) View #{pet.name}
+                a.card-link(href=`/pets/${pet._id}`) View #{pet.name} #{pet.purchased}
   nav(aria-label='Page navigation example').d-flex.justify-content-center
     ul.pagination
       if currentPage > 1
-
         li.page-item
           if term
             a.page-link(href=`?term=${term}&page=${currentPage - 1}`) Previous

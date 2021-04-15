@@ -72,22 +72,24 @@ module.exports = (app) => {
     });
   });
 
-  // SEARCH PET
-  app.get('/search', (req, res) => {
+  // SEARCH
+  app.get('/search', function (req, res) {
+    Pet
+        .find(
+            { $text : { $search : req.query.term } },
+            { score : { $meta: "textScore" } }
+        )
+        .sort({ score : { $meta : 'textScore' } })
+        .limit(20)
+        .exec(function(err, pets) {
+          if (err) { return res.status(400).send(err) }
 
-    const term = new RegExp(req.query.term, 'i')
-
-    const page = req.query.page || 1
-    Pet.paginate(
-      {
-        $or: [
-          { 'name': term },
-          { 'species': term }
-        ]
-      },
-      { page: page }).then((results) => {
-        res.render('pets-index', { pets: results.docs, pagesCount: results.pages, currentPage: page, term: req.query.term });
-      });
+          if (req.header('Content-Type') == 'application/json') {
+            return res.json({ pets: pets });
+          } else {
+            return res.render('pets-index', { pets: pets, term: req.query.term });
+          }
+        });
   });
 
   // EDIT PET
@@ -99,8 +101,6 @@ module.exports = (app) => {
 
   // PURCHASE
   app.post('/pets/:id/purchase', (req, res) => {
-
-
     // Set your secret key: remember to change this to your live secret key in production
     // See your keys here: https://dashboard.stripe.com/account/apikeys
     var stripe = require("stripe")(process.env.PRIVATE_STRIPE_API_KEY);
@@ -130,8 +130,33 @@ module.exports = (app) => {
           amount: chg.amount / 100,
           petName: pet.name
         };
+
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+        today = mm + '/' + dd + '/' + yyyy;
+        purchasedBool = false
+        console.log(pet.purchasedAt)
+        if(pet.purchasedAt != ""){
+          purchasedBool = true
+        }else if (pet.purchasedAt == ""){
+          purchasedBool = false
+        }
+        
+        Pet.findByIdAndUpdate(petId, { purchasedAt: today, purchased: purchasedBool },
+                            function (err, docs) {
+            if (err){
+                console.log(err)
+            }
+            else{
+                console.log("Updated User : ", docs);
+            }
+        });
+
         // Call our mail handler to manage sending emails
         mailer.sendMail(user, req, res);
+
       })
       .catch(err => {
         console.log('Error: ' + err);
